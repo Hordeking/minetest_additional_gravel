@@ -24,6 +24,25 @@ if minetest.get_modpath("stairs") then
 	end
 end
 
+function get_neighbor_light_max(pos)
+	local max_light = -1
+	-- Only need to check 6 faces!
+	local i = pos.x
+	local j = pos.y
+	local k = pos.z
+	facet = {	vector.new(i-0.5, j, k), vector.new(i+0.5, j, k),
+				vector.new(i, j-0.5, k), vector.new(i, j+0.5, k),
+				vector.new(i, j, k-0.5), vector.new(i, j, k+0.5),
+			}
+		for n=1, #facet do
+			if(tonumber(minetest.get_node_light(facet[n]))) then
+				max_light = math.max(max_light, minetest.get_node_light(facet[n]))
+            end
+			--minetest.chat_send_all( tostring(n)..": ".. tostring( facet[n] ).." = "..tostring(minetest.get_node_light( facet[n] ))	)
+		end
+	return max_light
+end
+
 if minetest.get_modpath("default") then
 
 
@@ -41,8 +60,10 @@ if minetest.get_modpath("default") then
 		sounds = default.node_sound_gravel_defaults(),
 	})
 
-	register_stairs("default","gravel")	
-	register_stairs(fs,"overgrown_gravel")	-- JD Added 10/10/2024
+	if minetest.get_modpath("stairs") then
+		register_stairs("default","gravel")	
+		register_stairs(fs,"overgrown_gravel")	-- JD Added 10/10/2024
+	end
 end
 
 
@@ -89,7 +110,8 @@ minetest.register_abm({
 	action = function(pos, node)
 		node.name = moss_correspondences[node.name]
 		if node.name then
-			if minetest.get_node_light(pos) < 13 then
+			--minetest.chat_send_all( tostring( get_neighbor_light_max(pos) ) )
+			if get_neighbor_light_max(pos) < 13 then	--Only overgrow if light is bright enough
 				return
 			end
 			minetest.set_node(pos, node)
